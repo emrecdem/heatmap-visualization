@@ -21,20 +21,24 @@ var myGroups = d3.range(start_time, end_time, resolution);
 var myVars = ["au01", "au04", "au09", "au10", "au12", "au14"]
 
 // Build X scales and axis:
-var x = d3.scaleBand()
+const x = d3.scaleBand()
   .range([ 0, width ])
   .domain(myGroups)
   .padding(0.01);
-svg.append("g")
+const xAxis = g => g
   .attr("transform", "translate(0," + height + ")")
-  .call(d3.axisBottom(x))
+  .call(d3.axisBottom(x));
+svg.append("g")
+  .attr("class", "x-axis")
+  .call(xAxis);
+
 
 // Build Y scales and axis:
 var y = d3.scaleBand()
   .range([ height, 0 ])
   .domain(myVars)
   .padding(0.01);
-svg.append("g")
+let yAxis = svg.append("g")
   .call(d3.axisLeft(y));
 
 // Build color scale
@@ -94,6 +98,16 @@ fetch('http://localhost:8080/v1/graphql', {
           .on("mouseout", handleMouseOut)
 });
 
+function zoomed() {
+  x.range([margin.left, width - margin.right].map(d => d3.event.transform.applyX(d)));
+  svg.selectAll("rect").attr("x", d => x(d.frame)).attr("width", x.bandwidth());
+  svg.selectAll(".x-axis").call(xAxis);
+}
+
+var zoom = d3.zoom().on("zoom", zoomed);
+svg.call(zoom);
+
+
 function handleMouseOver(d, i) {
   // Specify where to put label of text
   let node = svg.append("text").attrs({
@@ -101,7 +115,7 @@ function handleMouseOver(d, i) {
     x: d3.event.pageX, // - document.getElementById('svg-container').getBoundingClientRect().x,
     y: d3.event.pageY, // - document.getElementById('svg-container').getBoundingClientRect().y
   });
-  console.log(node);
+  //console.log(node);
 
   node.text(function() {
     return [d.value];  // Value of the text
