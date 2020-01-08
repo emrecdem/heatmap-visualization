@@ -1,0 +1,112 @@
+
+// set the dimensions and margins of the graph
+var margin = {top: 30, right: 100, bottom: 30, left: 50},
+  width = 2000 - margin.left - margin.right,
+  height = 200 - margin.top - margin.bottom;
+
+// append the svg object to the body of the page
+var svg = d3.select("#svg-container")
+    .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+    .attr("transform",
+            "translate(" + margin.left + "," + margin.top + ")");
+
+// Labels of row and columns
+let frame_start = 97
+let frame_end = 197
+var myGroups = d3.range(frame_start, frame_end, 1);
+var myVars = ["AU01_r", "AU04_r", "AU09_r", "AU10_r", "AU12_r", "AU14_r"]
+
+// Build X scales and axis:
+var x = d3.scaleBand()
+  .range([ 0, width ])
+  .domain(myGroups)
+  .padding(0.01);
+svg.append("g")
+  .attr("transform", "translate(0," + height + ")")
+  .call(d3.axisBottom(x))
+
+// Build Y scales and axis:
+var y = d3.scaleBand()
+  .range([ height, 0 ])
+  .domain(myVars)
+  .padding(0.01);
+svg.append("g")
+  .call(d3.axisLeft(y));
+
+// Build color scale
+var myColor = d3.scaleLinear()
+  .range(["#f5dd42", "#dd0000"])
+  .domain([0, 4])
+
+
+const trowvar = (varr, row) => ({frame: row.frame, variable: varr, value: row[varr]});
+const longify = R.pipe(
+  R.map(R.juxt(R.map(R.curry(trowvar), myVars))),
+  R.flatten
+);
+
+// const longify = (rows) => {
+//   const extracted = []
+//   rows.forEach((row) => {
+//     myVars.forEach((varr) => {
+//       extracted.push({ frame: row.frame, variable: varr, value: row[varr] });
+//     });
+//   });
+//   return extracted;
+// }
+
+
+fetch('http://localhost:8080/v1/graphql', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      query: `query MyQuery2 {
+        data(where: {_and: [ {frame: {_gte: ${frame_start}}}, {frame: {_lt:${frame_end}}}]}) {
+          frame,
+          ${myVars.join(', ')}
+        }
+      }`,
+    }),
+  })
+    .then(response => {
+      return response.json()
+    })
+    .then(responseAsJson => {
+      console.log(responseAsJson.data.data);
+      const data = longify(responseAsJson.data.data);
+      console.log(data);
+      svg.selectAll()
+          .data(data, function(d) {return "" + d.frame+':'+d.variable;})
+          .enter()
+          .append("rect")
+          .attr("x", function(d) { return x(d.frame) })
+          .attr("y", function(d) { return y(d.variable) })
+          .attr("width", x.bandwidth() )
+          .attr("height", y.bandwidth() )
+          .style("fill", function(d) { return myColor(d.value)} )
+          .on("mouseover", handleMouseOver)
+          .on("mouseout", handleMouseOut)
+});
+
+function handleMouseOver(d, i) {
+  // Specify where to put label of text
+  let node = svg.append("text").attrs({
+    id: "popup",  // Create an id for text so we can select it later for removing on mouseout
+    x: d3.event.pageX, // - document.getElementById('svg-container').getBoundingClientRect().x,
+    y: d3.event.pageY, // - document.getElementById('svg-container').getBoundingClientRect().y
+  });
+  console.log(node);
+
+  node.text(function() {
+    return [d.value];  // Value of the text
+  });
+}
+
+function handleMouseOut(d, i) {
+  d3.select("#popup").remove();
+}
