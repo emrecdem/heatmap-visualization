@@ -1,7 +1,7 @@
 
 // set the dimensions and margins of the graph
 var margin = {top: 30, right: 100, bottom: 30, left: 50},
-  width = 2000 - margin.left - margin.right,
+  width = 1000 - margin.left - margin.right,
   height = 200 - margin.top - margin.bottom;
 
 // append the svg object to the body of the page
@@ -14,10 +14,11 @@ var svg = d3.select("#svg-container")
             "translate(" + margin.left + "," + margin.top + ")");
 
 // Labels of row and columns
-let frame_start = 97
-let frame_end = 197
-var myGroups = d3.range(frame_start, frame_end, 1);
-var myVars = ["AU01_r", "AU04_r", "AU09_r", "AU10_r", "AU12_r", "AU14_r"]
+let start_time = 0
+let end_time = 350
+let resolution = 5
+var myGroups = d3.range(start_time, end_time, resolution);
+var myVars = ["au01", "au04", "au09", "au10", "au12", "au14"]
 
 // Build X scales and axis:
 var x = d3.scaleBand()
@@ -42,7 +43,7 @@ var myColor = d3.scaleLinear()
   .domain([0, 4])
 
 
-const trowvar = (varr, row) => ({frame: row.frame, variable: varr, value: row[varr]});
+const trowvar = (varr, row) => ({frame: row.min_timestamp, variable: varr, value: row[varr]});
 const longify = R.pipe(
   R.map(R.juxt(R.map(R.curry(trowvar), myVars))),
   R.flatten
@@ -58,27 +59,27 @@ const longify = R.pipe(
 //   return extracted;
 // }
 
+const body = JSON.stringify({
+  query: `query MyQuery2 {
+    testaggau(args: {start_time: ${start_time}, end_time: ${end_time}, resolution: ${resolution}}) {
+      ${myVars.join(', ')}
+      grouped_seconds
+      min_timestamp
+    }
+}`});
+console.log(body);
 
 fetch('http://localhost:8080/v1/graphql', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      query: `query MyQuery2 {
-        data(where: {_and: [ {frame: {_gte: ${frame_start}}}, {frame: {_lt:${frame_end}}}]}) {
-          frame,
-          ${myVars.join(', ')}
-        }
-      }`,
-    }),
+    headers: { 'Content-Type': 'application/json' },
+    body,
   })
     .then(response => {
       return response.json()
     })
     .then(responseAsJson => {
-      console.log(responseAsJson.data.data);
-      const data = longify(responseAsJson.data.data);
+      console.log(responseAsJson.data.testaggau);
+      const data = longify(responseAsJson.data.testaggau);
       console.log(data);
       svg.selectAll()
           .data(data, function(d) {return "" + d.frame+':'+d.variable;})
