@@ -10,8 +10,7 @@ var svg = d3.select("#svg-container")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
     .append("g")
-    .attr("transform",
-            "translate(" + margin.left + "," + margin.top + ")");
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 // Labels of row and columns
 let start_time = 0
@@ -32,14 +31,16 @@ svg.append("g")
   .attr("class", "x-axis")
   .call(xAxis);
 
-
 // Build Y scales and axis:
-var y = d3.scaleBand()
+const y = d3.scaleBand()
   .range([ height, 0 ])
   .domain(myVars)
   .padding(0.01);
-let yAxis = svg.append("g")
+const yAxis = g => g
   .call(d3.axisLeft(y));
+svg.append("g")
+  .attr("class", "y-axis")
+  .call(yAxis);
 
 // Build color scale
 var myColor = d3.scaleLinear()
@@ -63,17 +64,21 @@ const longify = R.pipe(
 //   return extracted;
 // }
 
-const body = JSON.stringify({
-  query: `query MyQuery2 {
-    testaggau(args: {start_time: ${start_time}, end_time: ${end_time}, resolution: ${resolution}}) {
-      ${myVars.join(', ')}
-      grouped_seconds
-      min_timestamp
-    }
-}`});
-console.log(body);
 
-fetch('http://localhost:8080/v1/graphql', {
+const fetchData = () => {
+  resolution = Math.max(resolution, 1);
+
+  const body = JSON.stringify({
+    query: `query MyQuery2 {
+      testaggau(args: {start_time: ${start_time}, end_time: ${end_time}, resolution: ${resolution}}) {
+        ${myVars.join(', ')}
+        grouped_seconds
+        min_timestamp
+      }
+  }`});
+
+  console.log(body);
+    return fetch('http://localhost:8080/v1/graphql', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body,
@@ -82,25 +87,45 @@ fetch('http://localhost:8080/v1/graphql', {
       return response.json()
     })
     .then(responseAsJson => {
-      console.log(responseAsJson.data.testaggau);
+      //console.log(responseAsJson.data.testaggau);
       const data = longify(responseAsJson.data.testaggau);
-      console.log(data);
-      svg.selectAll()
-          .data(data, function(d) {return "" + d.frame+':'+d.variable;})
-          .enter()
-          .append("rect")
-          .attr("x", function(d) { return x(d.frame) })
-          .attr("y", function(d) { return y(d.variable) })
-          .attr("width", x.bandwidth() )
-          .attr("height", y.bandwidth() )
-          .style("fill", function(d) { return myColor(d.value)} )
-          .on("mouseover", handleMouseOver)
-          .on("mouseout", handleMouseOut)
-});
+      //console.log(data);
+      
+      const cells = svg.selectAll(".cell")
+        .data(data, function(d) {return "" + d.frame+':'+d.variable;})
+      cells.exit().remove();
+      cells.enter().append("rect")
+        .attr("class", "cell")
+        .merge(cells)
+        .attr("x", function(d) { return x(d.frame) })
+        .attr("y", function(d) { return y(d.variable) })
+        .attr("width", x.bandwidth() )
+        .attr("height", y.bandwidth() )
+        .style("fill", function(d) { return myColor(d.value)} )
+        .on("mouseover", handleMouseOver)
+        .on("mouseout", handleMouseOut)
+    });
+};
+fetchData();
 
 function zoomed() {
+  let k = d3.event.transform.k;
+  let new_resolution = Math.floor(10 / k);
+  if (new_resolution !== resolution) {
+    resolution = new_resolution;
+
+    // Update groups used for x-axis
+    myGroups = d3.range(start_time, end_time, resolution);
+    x.domain(myGroups);
+
+    // Update cells
+    fetchData();
+  }
+
   x.range([margin.left, width - margin.right].map(d => d3.event.transform.applyX(d)));
-  svg.selectAll("rect").attr("x", d => x(d.frame)).attr("width", x.bandwidth());
+  svg.selectAll(".cell")
+    .attr("x", d => x(d.frame))
+    .attr("width", x.bandwidth());
   svg.selectAll(".x-axis").call(xAxis);
 }
 
@@ -123,5 +148,5 @@ function handleMouseOver(d, i) {
 }
 
 function handleMouseOut(d, i) {
-  d3.select("#popup").remove();
+  d3.selectAll("#popup").remove();
 }
