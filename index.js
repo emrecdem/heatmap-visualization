@@ -15,7 +15,7 @@ var svg = d3.select("#svg-container")
 // Labels of row and columns
 let start_time = 0
 let end_time = 350
-let resolution = 5
+let resolution = 10
 var myGroups = d3.range(start_time, end_time, resolution);
 var myVars = ["au01", "au04", "au09", "au10", "au12", "au14"]
 
@@ -103,16 +103,27 @@ const fetchData = () => {
         .attr("height", y.bandwidth() )
         .style("fill", function(d) { return myColor(d.value)} )
         .on("mouseover", handleMouseOver)
-        .on("mouseout", handleMouseOut)
+        .on("mouseout", handleMouseOut);
+
+      svg.selectAll(".x-axis").call(xAxis);
+      svg.selectAll(".y-axis").call(yAxis);
     });
 };
 fetchData();
 
 function zoomed() {
+  x.range([margin.left, width - margin.right]
+    .map(d => d3.event.transform.applyX(d)));
+  svg.selectAll(".cell")
+    .attr("x", d => x(d.frame))
+    .attr("width", x.bandwidth());
+  svg.selectAll(".x-axis").call(xAxis);
+
   let k = d3.event.transform.k;
   let new_resolution = Math.floor(10 / k);
   if (new_resolution !== resolution) {
     resolution = new_resolution;
+    console.log(resolution);
 
     // Update groups used for x-axis
     myGroups = d3.range(start_time, end_time, resolution);
@@ -122,11 +133,6 @@ function zoomed() {
     fetchData();
   }
 
-  x.range([margin.left, width - margin.right].map(d => d3.event.transform.applyX(d)));
-  svg.selectAll(".cell")
-    .attr("x", d => x(d.frame))
-    .attr("width", x.bandwidth());
-  svg.selectAll(".x-axis").call(xAxis);
 }
 
 var zoom = d3.zoom().on("zoom", zoomed);
