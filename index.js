@@ -66,7 +66,6 @@ const longify = R.pipe(
 
 
 const fetchData = () => {
-  resolution = Math.max(resolution, 1);
 
   const body = JSON.stringify({
     query: `query MyQuery2 {
@@ -122,7 +121,7 @@ function zoomed() {
   let k = d3.event.transform.k;
   let new_resolution = Math.floor(10 / k);
   if (new_resolution !== resolution) {
-    resolution = new_resolution;
+    resolution = Math.max(new_resolution, 1);
     console.log(resolution);
 
     // Update groups used for x-axis
