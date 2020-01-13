@@ -147,7 +147,7 @@ header{
     grid-row-gap: 5px;
 }
 
-#data-point-info-container, #data-point-text-container, #data-point-annotations-container, #svg-container{
+#data-point-info-container, #data-point-text-container, #data-point-annotations-container {
     background-color:rgb(201,71,153,0.03);
     border-radius: 6px;
     padding:10px;

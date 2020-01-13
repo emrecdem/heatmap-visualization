@@ -43,10 +43,9 @@ svg.append("g")
   .call(yAxis);
 
 // Build color scale
-var myColor = d3.scaleLinear()
-  .range(["#f5dd42", "#dd0000"])
-  .domain([0, 4])
-
+const myColor = d3.scaleSequential()
+  .domain([0,4])
+  .interpolator(d3.interpolateInferno);
 
 // Converts wide format data to long format
 const longify = (rows) => {
@@ -70,8 +69,7 @@ const fetchData = () => {
       }
   }`});
 
-  console.log(body);
-    return fetch('http://localhost:8080/v1/graphql', {
+  return fetch('http://localhost:8080/v1/graphql', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body,
