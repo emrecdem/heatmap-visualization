@@ -48,22 +48,16 @@ var myColor = d3.scaleLinear()
   .domain([0, 4])
 
 
-const trowvar = (varr, row) => ({frame: row.min_timestamp, variable: varr, value: row[varr]});
-const longify = R.pipe(
-  R.map(R.juxt(R.map(R.curry(trowvar), myVars))),
-  R.flatten
-);
-
-// const longify = (rows) => {
-//   const extracted = []
-//   rows.forEach((row) => {
-//     myVars.forEach((varr) => {
-//       extracted.push({ frame: row.frame, variable: varr, value: row[varr] });
-//     });
-//   });
-//   return extracted;
-// }
-
+// Converts wide format data to long format
+const longify = (rows) => {
+  const extracted = []
+  rows.forEach((row) => {
+    myVars.forEach((varr) => {
+      extracted.push({ frame: row.min_timestamp, variable: varr, value: row[varr] });
+    });
+  });
+  return extracted;
+}
 
 const fetchData = () => {
 
