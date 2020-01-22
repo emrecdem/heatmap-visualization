@@ -2,7 +2,7 @@
 // set the dimensions and margins of the graph
 var margin = {top: 30, right: 100, bottom: 30, left: 50},
   width = 1000 - margin.left - margin.right,
-  height = 200 - margin.top - margin.bottom;
+  height = 400 - margin.top - margin.bottom;
 
 // append the svg object to the body of the page
 var svg = d3.select("#svg-container")
@@ -17,7 +17,7 @@ let start_time = 0
 let end_time = 350
 let resolution = 10
 var myGroups = d3.range(start_time, end_time, resolution);
-var myVars = ["au01", "au04", "au09", "au10", "au12", "au14"]
+var myVars = ["au01r", "au01c", "au04r", "au04c", "au09r", "au09c", "au10r", "au10c", "au12r", "au12c", "au14r", "au14c"]
 
 // Build X scales and axis:
 const x = d3.scaleBand()
@@ -41,6 +41,10 @@ const yAxis = g => g
 svg.append("g")
   .attr("class", "y-axis")
   .call(yAxis);
+
+// Group for main content
+const main = svg.append("g")
+  .attr("class", "main");
 
 // Build color scale
 const myColor = d3.scaleSequential()
@@ -74,27 +78,23 @@ const fetchData = () => {
     headers: { 'Content-Type': 'application/json' },
     body,
   })
-    .then(response => {
-      return response.json()
-    })
-    .then(responseAsJson => {
-      //console.log(responseAsJson.data.testaggau);
-      const data = longify(responseAsJson.data.testaggau);
-      //console.log(data);
+    .then(res => res.json())
+    .then(res => {
+      const data = longify(res.data.testaggau);
       
-      const cells = svg.selectAll(".cell")
-        .data(data, function(d) {return "" + d.frame+':'+d.variable;})
+      const cells = main.selectAll(".cell")
+        .data(data, d => "" + d.frame + ':' + d.variable)
       cells.exit().remove();
       cells.enter().append("rect")
         .attr("class", "cell")
         .merge(cells)
-        .attr("x", function(d) { return x(d.frame) })
-        .attr("y", function(d) { return y(d.variable) })
+        .attr("x", d => x(d.frame))
+        .attr("y", d => y(d.variable))
         .attr("width", x.bandwidth() )
         .attr("height", y.bandwidth() )
-        .style("fill", function(d) { return myColor(d.value)} )
-        .on("mouseover", handleMouseOver)
-        .on("mouseout", handleMouseOut);
+        .style("fill", d => myColor(d.value))
+        //.on("mouseover", handleMouseOver)
+        //.on("mouseout", handleMouseOut);
 
       svg.selectAll(".x-axis").call(xAxis);
       svg.selectAll(".y-axis").call(yAxis);
@@ -103,18 +103,29 @@ const fetchData = () => {
 fetchData();
 
 function zoomed() {
-  x.range([margin.left, width - margin.right]
+  //console.log(d3.event.transform);
+  //console.log([0, 350].map(d => d3.event.transform.invertX(d)));
+  //console.log([0, 350].map(d => d3.event.transform.applyX(d)));
+  
+/*  x.range([margin.left, width - margin.right]
     .map(d => d3.event.transform.applyX(d)));
   svg.selectAll(".cell")
     .attr("x", d => x(d.frame))
     .attr("width", x.bandwidth());
-  svg.selectAll(".x-axis").call(xAxis);
+  svg.selectAll(".x-axis").call(xAxis);*/
 
+  let t = d3.event.transform;
+  let tx = Math.min(0, Math.max(t.x, width - width*t.k));
+  let ty = Math.min(0, Math.max(t.y, height - height*t.k));
+  main.attr('transform', 'translate(' + [tx,ty] + ')scale(' + t.k + ')');
+  svg.selectAll('.x-axis').call(xAxis);
+  svg.selectAll('.y-axis').call(yAxis);
+
+  /*
   let k = d3.event.transform.k;
   let new_resolution = Math.floor(10 / k);
   if (new_resolution !== resolution) {
     resolution = Math.max(new_resolution, 1);
-    console.log(resolution);
 
     // Update groups used for x-axis
     myGroups = d3.range(start_time, end_time, resolution);
@@ -122,8 +133,7 @@ function zoomed() {
 
     // Update cells
     fetchData();
-  }
-
+  }*/
 }
 
 var zoom = d3.zoom().on("zoom", zoomed);
