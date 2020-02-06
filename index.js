@@ -42,9 +42,20 @@ svg.append("g")
   .attr("class", "y-axis")
   .call(yAxis);
 
+// Clipping
+svg.append('defs')
+  .append('clipPath')
+  .attr('id', 'clip')
+  .append('rect')
+    .attr('x', 0)
+    .attr('y', 0)
+    .attr('width', width)
+    .attr('height', height);
+
 // Group for main content
 const main = svg.append("g")
-  .attr("class", "main");
+  .attr("class", "main")
+  .attr('clip-path', 'url(#clip)');
 
 // Build color scale
 const myColor = d3.scaleSequential()
