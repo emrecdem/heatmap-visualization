@@ -1,6 +1,10 @@
 
+var video = videojs('my-video');
+video.currentTime(120);
+//video.play();
+
 // set the dimensions and margins of the graph
-var margin = {top: 30, right: 100, bottom: 30, left: 50},
+var margin = {top: 30, right: 100, bottom: 50, left: 50},
   width = 1000 - margin.left - margin.right,
   height = 400 - margin.top - margin.bottom;
 
@@ -17,7 +21,22 @@ let start_time = 0
 let end_time = 350
 let resolution = 10
 var myGroups = d3.range(start_time, end_time, resolution);
+var tickValues = d3.range(start_time, end_time, 30);
 var myVars = ["au01r", "au01c", "au04r", "au04c", "au09r", "au09c", "au10r", "au10c", "au12r", "au12c", "au14r", "au14c"]
+
+const formatDuration = d => new Date(1000 * d).toISOString().substr(14, 5);
+
+var slider = d3
+.sliderHorizontal()
+.min(0)
+.max(350)
+.step(1)
+.width(width)
+.displayValue(false)
+.tickFormat(formatDuration)
+.on('onchange', val => {
+  console.log(val);
+});
 
 // Build X scales and axis:
 const x = d3.scaleBand()
@@ -27,9 +46,18 @@ const x = d3.scaleBand()
 const xAxis = g => g
   .attr("transform", "translate(0," + height + ")")
   .call(d3.axisBottom(x));
+    //.tickValues(tickValues)
+    //.tickFormat(formatDuration));
 svg.append("g")
   .attr("class", "x-axis")
-  .call(xAxis);
+  .call(xAxis)
+  .append("circle")
+    .attr('class', 'circle')
+    .attr('cx', 400)
+    .attr('cy', 32)
+    .attr('r', 8)
+    .attr('stroke', 'black')
+    .attr('fill', 'gray');
 
 // Build Y scales and axis:
 const y = d3.scaleBand()
@@ -118,21 +146,24 @@ function zoomed() {
   //console.log([0, 350].map(d => d3.event.transform.invertX(d)));
   //console.log([0, 350].map(d => d3.event.transform.applyX(d)));
   
-/*  x.range([margin.left, width - margin.right]
+  x.range([margin.left, width - margin.right]
     .map(d => d3.event.transform.applyX(d)));
   svg.selectAll(".cell")
     .attr("x", d => x(d.frame))
     .attr("width", x.bandwidth());
-  svg.selectAll(".x-axis").call(xAxis);*/
+  svg.selectAll(".x-axis").call(xAxis);
+  
+  // let currentTime = x.invert(400);
+  // console.log(currentTime);
 
-  let t = d3.event.transform;
+
+/*  let t = d3.event.transform;
   let tx = Math.min(0, Math.max(t.x, width - width*t.k));
   let ty = Math.min(0, Math.max(t.y, height - height*t.k));
   main.attr('transform', 'translate(' + [tx,ty] + ')scale(' + t.k + ')');
   svg.selectAll('.x-axis').call(xAxis);
-  svg.selectAll('.y-axis').call(yAxis);
+  svg.selectAll('.y-axis').call(yAxis);*/
 
-  /*
   let k = d3.event.transform.k;
   let new_resolution = Math.floor(10 / k);
   if (new_resolution !== resolution) {
@@ -144,7 +175,7 @@ function zoomed() {
 
     // Update cells
     fetchData();
-  }*/
+  }
 }
 
 var zoom = d3.zoom().on("zoom", zoomed);

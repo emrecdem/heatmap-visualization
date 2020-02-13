@@ -6,15 +6,34 @@
     <script src="https://d3js.org/d3.v5.js"></script>
     <script src="https://d3js.org/d3-selection-multi.v1.min.js"></script>
     <script src="https://d3js.org/d3-scale-chromatic.v1.js"></script>
+    <script src="https://unpkg.com/d3-simple-slider"></script>
     <link rel="stylesheet" type="text/css" href="scatterplot.css">
-</head>
-    
+    <link href="https://vjs.zencdn.net/7.6.6/video-js.css" rel="stylesheet" />
+
+    <!-- If you'd like to support IE8 (for Video.js versions prior to v7) -->
+    <script src="https://vjs.zencdn.net/ie8/1.1.2/videojs-ie8.min.js"></script></head>
 
 <body>
-    <span id="svg-container">
+    <video
+    id="my-video"
+    class="video-js"
+    controls
+    preload="auto"
+    width="640"
+    height="264"
+    poster="MY_VIDEO_POSTER.jpg"
+    data-setup="{}"
+  >
+    <source src="P1_S2_LSB_HM1_Cfront.mp4" type="video/mp4" />
+  </video>
+
+  <div id="slider"></div>
+  
+  <span id="svg-container">
     </span>
 </body>
 
+<script src="https://vjs.zencdn.net/7.6.6/video.js"></script>
 <script type="module" src="index.js"></script>
 
 </html>
