@@ -103,29 +103,18 @@ const fetchData = () => {
 fetchData();
 
 function zoomed() {
-  //console.log(d3.event.transform);
-  //console.log([0, 350].map(d => d3.event.transform.invertX(d)));
-  //console.log([0, 350].map(d => d3.event.transform.applyX(d)));
-  
-/*  x.range([margin.left, width - margin.right]
+  x.range([margin.left, width - margin.right]
     .map(d => d3.event.transform.applyX(d)));
   svg.selectAll(".cell")
     .attr("x", d => x(d.frame))
     .attr("width", x.bandwidth());
-  svg.selectAll(".x-axis").call(xAxis);*/
+  svg.selectAll(".x-axis").call(xAxis);
 
-  let t = d3.event.transform;
-  let tx = Math.min(0, Math.max(t.x, width - width*t.k));
-  let ty = Math.min(0, Math.max(t.y, height - height*t.k));
-  main.attr('transform', 'translate(' + [tx,ty] + ')scale(' + t.k + ')');
-  svg.selectAll('.x-axis').call(xAxis);
-  svg.selectAll('.y-axis').call(yAxis);
-
-  /*
   let k = d3.event.transform.k;
   let new_resolution = Math.floor(10 / k);
   if (new_resolution !== resolution) {
     resolution = Math.max(new_resolution, 1);
+    console.log(resolution);
 
     // Update groups used for x-axis
     myGroups = d3.range(start_time, end_time, resolution);
@@ -133,7 +122,8 @@ function zoomed() {
 
     // Update cells
     fetchData();
-  }*/
+  }
+
 }
 
 var zoom = d3.zoom().on("zoom", zoomed);
