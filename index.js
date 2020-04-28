@@ -19,7 +19,7 @@ var svg = d3.select("#svg-container")
 // Labels of row and columns
 let start_time = 0
 let end_time = 350
-let resolution = 10
+let resolution = 1
 var myGroups = d3.range(start_time, end_time, resolution);
 var tickValues = d3.range(start_time, end_time, 30);
 var myVars = ["au01r", "au01c", "au04r", "au04c", "au09r", "au09c", "au10r", "au10c", "au12r", "au12c", "au14r", "au14c"]
@@ -164,18 +164,18 @@ function zoomed() {
   svg.selectAll('.x-axis').call(xAxis);
   svg.selectAll('.y-axis').call(yAxis);*/
 
-  let k = d3.event.transform.k;
-  let new_resolution = Math.floor(10 / k);
-  if (new_resolution !== resolution) {
-    resolution = Math.max(new_resolution, 1);
+  // let k = d3.event.transform.k;
+  // let new_resolution = 1; //Math.floor(10 / k);
+  // if (new_resolution !== resolution) {
+  //   resolution = Math.max(new_resolution, 1);
 
-    // Update groups used for x-axis
-    myGroups = d3.range(start_time, end_time, resolution);
-    x.domain(myGroups);
+  //   // Update groups used for x-axis
+  //   myGroups = d3.range(start_time, end_time, resolution);
+  //   x.domain(myGroups);
 
-    // Update cells
-    fetchData();
-  }
+  //   // Update cells
+  //   fetchData();
+  // }
 }
 
 var zoom = d3.zoom().on("zoom", zoomed);
